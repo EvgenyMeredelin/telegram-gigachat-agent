@@ -1,0 +1,5 @@
+aiogram
+black
+langchain-gigachat
+python-dateutil
+requests
