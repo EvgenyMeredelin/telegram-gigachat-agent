@@ -160,7 +160,7 @@ class DepositSchema(BaseModel):
 
 class SixSigmaSchema(BaseModel):
     """
-    Параметры процесса для запроса к https://six-sigma.containerapps.ru/chart.
+    Параметры процесса для запроса к https://six-sigma.containerapps.ru/plot.
     """
 
     tests: int = Field(

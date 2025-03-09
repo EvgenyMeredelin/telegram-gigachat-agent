@@ -69,7 +69,7 @@ six_sigma_agent = ApiAgent(
     prompt=extract_prompt,
     schema=SixSigmaSchema,
     method="GET",
-    url="https://six-sigma.containerapps.ru/chart",
+    url="https://six-sigma.containerapps.ru/plot",
     payload_name="params"
 )
 
