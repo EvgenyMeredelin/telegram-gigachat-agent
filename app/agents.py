@@ -3,18 +3,11 @@ __all__ = [
     "OFFTOP_SENTINEL", "fallback_answer"
 ]
 
-# стандартная библиотека
-import os
-
-# сторонние библиотеки
+from decouple import config
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_gigachat.chat_models import GigaChat
 
-# пользовательские модули
 from models import *
-
-
-OFFTOP_SENTINEL = "offtop"
 
 
 GigaChat.__str__ = (
@@ -22,8 +15,8 @@ GigaChat.__str__ = (
     + ("", " Lite")[self.model == "GigaChat"]
 )
 gigachat = GigaChat(
-    credentials=os.environ["GIGACHAT_AUTH_KEY"],
-    model=os.environ["GIGACHAT_MODEL"],
+    credentials=config("GIGACHAT_AUTH_KEY"),
+    model=config("GIGACHAT_MODEL"),
     verify_ssl_certs=False
 )
 
@@ -73,12 +66,16 @@ six_sigma_agent = ApiAgent(
     payload_name="params"
 )
 
+
 ######## меню целевых агентов ########
 menu = {
     "deposit_agent"  : deposit_agent,
     "six_sigma_agent": six_sigma_agent
 }
 ######################################
+
+
+OFFTOP_SENTINEL = "offtop"
 
 clf_prompt = f"""
 Классифицируй сообщение как одно из {", ".join(menu)}.

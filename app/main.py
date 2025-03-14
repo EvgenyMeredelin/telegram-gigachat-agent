@@ -1,31 +1,16 @@
-# стандартная библиотека
-import os
-
-# сторонние библиотеки
 import black
 import requests
-from aiogram import (
-    Bot,
-    Dispatcher,
-    F
-)
+from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import (
-    BufferedInputFile,
-    Message,
-    Update
-)
+from aiogram.types import BufferedInputFile, Message, Update
 from aiohttp import web
+from decouple import config
 
-# from dotenv import load_dotenv
-# load_dotenv()
-
-# пользовательские модули
 from agents import *
 
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
+BOT_TOKEN = config("BOT_TOKEN")
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dispatcher = Dispatcher()
 
@@ -39,21 +24,20 @@ def format_black(response: requests.Response) -> str:
 
 
 @dispatcher.message(F.text)
-async def process_text_message(message: Message):
-    """
-    Обработка текстового сообщения пользователя.
-    """
+async def handle_text_message(message: Message):
+    """Обработка текстового сообщения пользователя. """
+
     # агент-диспетчер определяет имя целевого агента
-    agent_name = supervisor.process_message(message)
+    agent_name = supervisor.handle_message(message)
     agent = menu.get(agent_name, OFFTOP_SENTINEL)
 
-    # оффтоп: сообщение пользователя не вызывает ни один доступный навык
+    # оффтоп: сообщение пользователя не вызывает ни один доступный агент
     if agent == OFFTOP_SENTINEL:
         await message.answer(fallback_answer)
 
     # целевой агент извлекает из сообщения данные и отправляет их в API
     else:
-        response = agent.process_message(message)
+        response = agent.handle_message(message)
         content_type = response.headers["content-type"]
 
         if content_type == "application/json":
@@ -68,9 +52,7 @@ routes = web.RouteTableDef()
 
 @routes.post(f"/{BOT_TOKEN}")
 async def handle_webhook(request: web.Request):
-    """
-    Обработка webhook из Telegram.
-    """
+    """Обработка webhook из Telegram. """
     if str(request.url).split("/")[-1] == BOT_TOKEN:
         request_content = await request.json()
         update = Update(**request_content)
@@ -82,4 +64,4 @@ async def handle_webhook(request: web.Request):
 if __name__ == "__main__":
     app = web.Application()
     app.add_routes(routes)
-    web.run_app(app, host="0.0.0.0", port=int(os.environ["PORT"]))
+    web.run_app(app, host="0.0.0.0", port=int(config("PORT")))

@@ -3,36 +3,18 @@ __all__ = [
     "ApiAgent", "Supervisor"
 ]
 
-# стандартная библиотека
 import datetime
-from abc import (
-    ABC,
-    abstractmethod
-)
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import starmap
-from typing import (
-    Any,
-    Literal
-)
+from typing import Any, Literal
 
-# сторонние библиотеки
 import requests
 from aiogram.types import Message
 from dateutil.relativedelta import relativedelta
-from langchain_core.messages import (
-    HumanMessage,
-    SystemMessage
-)
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_gigachat.chat_models import GigaChat
-from pydantic import (
-    BaseModel,
-    computed_field,
-    Field
-)
-
-
-HTTP_METHODS = ("DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT")
+from pydantic import BaseModel, computed_field, Field
 
 
 @dataclass
@@ -51,17 +33,15 @@ class Example:
 @dataclass(kw_only=True)
 class BaseAgent(ABC):
     """
-    Базовый абстрактный класс агента.
+    Базовый класс агентов.
     """
 
     model : GigaChat
     prompt: str
 
     @abstractmethod
-    def process_message(self, message: Message):
-        """
-        Обработать сообщение пользователя.
-        """
+    def handle_message(self, message: Message):
+        """Обработать сообщение пользователя. """
         raise NotImplementedError
 
 
@@ -71,10 +51,8 @@ class Supervisor(BaseAgent):
     Агент-диспетчер.
     """
 
-    def process_message(self, message: Message) -> str:
-        """
-        Определить имя целевого агента.
-        """
+    def handle_message(self, message: Message) -> str:
+        """Определить имя целевого агента. """
         messages = [SystemMessage(self.prompt), HumanMessage(message.text)]
         return self.model.invoke(messages).content
 
@@ -82,7 +60,7 @@ class Supervisor(BaseAgent):
 @dataclass(kw_only=True)
 class TargetAgent(BaseAgent):
     """
-    Целевой агент.
+    Базовый класс целевых агентов.
     """
 
     mission : str                    # функциональное назначение агента
@@ -100,6 +78,9 @@ class TargetAgent(BaseAgent):
         return "\n\n".join(map(str, self.examples))
 
 
+HTTP_METHODS = ("DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT")
+
+
 @dataclass(kw_only=True)
 class ApiAgent(TargetAgent):
     """
@@ -113,7 +94,7 @@ class ApiAgent(TargetAgent):
                        # тела запроса или его параметров
 
     def __post_init__(self) -> None:
-        self.mission += f" в {self.url}."
+        self.mission += f" в\n{self.url}"
         super().__post_init__()
 
     def extract_data(self, message: Message) -> dict[str, Any]:
@@ -125,10 +106,8 @@ class ApiAgent(TargetAgent):
         )
         return runnable.invoke({"message": message.text}).model_dump()
 
-    def process_message(self, message: Message) -> requests.Response:
-        """
-        Отправить запрос в API и вернуть ответ.
-        """
+    def handle_message(self, message: Message) -> requests.Response:
+        """Отправить запрос в API и вернуть ответ. """
         payload = {self.payload_name: self.extract_data(message)}
         return requests.request(self.method, self.url, **payload)
 
