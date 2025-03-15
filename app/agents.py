@@ -3,6 +3,9 @@ __all__ = [
     "OFFTOP_SENTINEL", "fallback_answer"
 ]
 
+import inspect
+import sys
+
 from decouple import config
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_gigachat.chat_models import GigaChat
@@ -20,22 +23,23 @@ gigachat = GigaChat(
     verify_ssl_certs=False
 )
 
-extractor_sys_prompt = """
+EXTRACT_PROMPT = """
 Ты эксперт в извлечении релевантной информации из текста.
 Если значение атрибута неизвестно, поставь ему null.
 """
 
 extract_prompt = ChatPromptTemplate.from_messages([
-    ("system", extractor_sys_prompt),
+    ("system", EXTRACT_PROMPT),
     ("human", "{message}")
 ])
 
 deposit_agent = ApiAgent(
+    name="deposit_agent",
     mission="Рассчитать депозит с ежемесячной капитализацией процентов",
     examples=[
-        ("500k на полтора года под 7.2%", "deposit_agent"),
-        ("на 6 мес. под 8%, сумма 1 млн.", "deposit_agent"),
-        ("200 тысяч, 3 месяца, ставка 6", "deposit_agent")
+        "500k на полтора года под 7.2%",
+        "на 6 мес. под 8%, сумма 1 млн.",
+        "200 тысяч, 3 месяца, ставка 6"
     ],
     model=gigachat,
     prompt=extract_prompt,
@@ -46,17 +50,18 @@ deposit_agent = ApiAgent(
 )
 
 six_sigma_agent = ApiAgent(
+    name="six_sigma_agent",
     mission="Оценить процесс по методике \"6 сигм\"",
     examples=[
-        ("total 100, nok 5, name Example Process", "six_sigma_agent"),
-        ("ok 95, nok 5", "six_sigma_agent"),
-        ("бракованных 5, всего 100", "six_sigma_agent"),
-        ("пять дефектных из ста штук", "six_sigma_agent"),
-        ("пять неудач из ста случаев", "six_sigma_agent"),
-        ("из ста тестов пять провалены", "six_sigma_agent"),
-        ("из сотни пять плохих, изделие - SSD", "six_sigma_agent"),
-        ("хороших 95, всего 100", "six_sigma_agent"),
-        ("из 100 результатов 95 успешных исходов", "six_sigma_agent")
+        "total 100, nok 5, name Example Process",
+        "ok 95, nok 5",
+        "бракованных 5, всего 100",
+        "пять дефектных из ста штук",
+        "пять неудач из ста случаев",
+        "из ста тестов пять провалены",
+        "из сотни пять плохих, изделие - SSD",
+        "хороших 95, всего 100",
+        "из 100 результатов 95 успешных исходов"
     ],
     model=gigachat,
     prompt=extract_prompt,
@@ -66,14 +71,12 @@ six_sigma_agent = ApiAgent(
     payload_name="params"
 )
 
-
-######## меню целевых агентов ########
+# меню целевых агентов
 menu = {
-    "deposit_agent"  : deposit_agent,
-    "six_sigma_agent": six_sigma_agent
+    agent.name: agent
+    for _, agent in inspect.getmembers(sys.modules[__name__])
+    if isinstance(agent, TargetAgent)
 }
-######################################
-
 
 OFFTOP_SENTINEL = "offtop"
 

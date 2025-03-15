@@ -1,12 +1,11 @@
 __all__ = [
-    "DepositSchema", "SixSigmaSchema",
-    "ApiAgent", "Supervisor"
+    "Supervisor", "TargetAgent", "ApiAgent",
+    "DepositSchema", "SixSigmaSchema"
 ]
 
 import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from itertools import starmap
 from typing import Any, Literal
 
 import requests
@@ -63,16 +62,16 @@ class TargetAgent(BaseAgent):
     Базовый класс целевых агентов.
     """
 
-    mission : str                    # функциональное назначение агента
-    examples: list[tuple[str, str]]  # примеры для обучения диспетчера выбору
-                                     # целевого агента
+    name    : str        # имя целевого агента
+    mission : str        # функциональное назначение целевого агента
+    examples: list[str]  # примеры для обучения диспетчера выбору агента
 
     def __post_init__(self) -> None:
-        messages = [f"• <i>{msg}</i>" for msg in dict(self.examples)]
+        examples = [f"• <i>{ex}</i>" for ex in self.examples]
         self.mission = "\n".join([
-            self.mission, "Примеры запросов:", *messages
+            self.mission, "Примеры запросов:", *examples
         ])
-        self.examples = list(starmap(Example, self.examples))
+        self.examples = [Example(ex, self.name) for ex in self.examples]
 
     def __str__(self) -> str:
         return "\n\n".join(map(str, self.examples))

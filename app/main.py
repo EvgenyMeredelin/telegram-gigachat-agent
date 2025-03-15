@@ -1,5 +1,3 @@
-import black
-import requests
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -8,19 +6,12 @@ from aiohttp import web
 from decouple import config
 
 from agents import *
+from tools import format_black
 
 
 BOT_TOKEN = config("BOT_TOKEN")
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dispatcher = Dispatcher()
-
-
-def format_black(response: requests.Response) -> str:
-    """
-    Наглядное структурированное представление ответа с содержимым типа
-    application/json.
-    """
-    return black.format_str(repr(response.json()), mode=black.Mode())
 
 
 @dispatcher.message(F.text)
@@ -31,7 +22,7 @@ async def handle_text_message(message: Message):
     agent_name = supervisor.handle_message(message)
     agent = menu.get(agent_name, OFFTOP_SENTINEL)
 
-    # оффтоп: сообщение пользователя не вызывает ни один доступный агент
+    # оффтоп: сообщение пользователя не вызывает ни одного целевого агента
     if agent == OFFTOP_SENTINEL:
         await message.answer(fallback_answer)
 
@@ -41,7 +32,7 @@ async def handle_text_message(message: Message):
         content_type = response.headers["content-type"]
 
         if content_type == "application/json":
-            await message.answer(format_black(response))
+            await message.answer(format_black(response.json()))
         elif content_type == "image/png":
             image = BufferedInputFile(response.content, "image.png")
             await message.answer_photo(image)
