@@ -1,0 +1,14 @@
+[project]
+name = "telegram-gigachat-agent"
+version = "0.1.0"
+description = "https://github.com/EvgenyMeredelin/telegram-gigachat-agent"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiogram>=3.19.0",
+    "black>=25.1.0",
+    "langchain-gigachat>=0.3.8",
+    "python-dateutil>=2.9.0.post0",
+    "python-decouple>=3.8",
+    "requests>=2.32.3",
+]
